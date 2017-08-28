@@ -18,14 +18,16 @@ before_build:
   - msbuild /t:restore EventStore.ClientAPI.NetCore.sln
 
 build:
-  project: EventStore.ClientAPI.NetCore.sln /t:pack
+  project: EventStore.ClientAPI.NetCore.sln
+  publish_nuget: true
+  verbosity: minimal
 
 test_script:  
-  - dotnet test test\EventStore.ClientAPI.NetCore.Tests\EventStore.ClientAPI.NetCore.Tests.csproj --no-build
+  - ps: $testResults = Join-Path $env:APPVEYOR_BUILD_FOLDER testResults.xml
+  - ps: dotnet test test\EventStore.ClientAPI.NetCore.Tests\EventStore.ClientAPI.NetCore.Tests.csproj --no-build --logger="trx;LogFileName=$testResults"
+  - ps: $wc = New-Object System.Net.WebClient
+  - ps: $wc.UploadFile("https://ci.appveyor.com/api/testresults/mstest/$env:APPVEYOR_JOB_ID", $testResults)
 
-
-artifacts: 
-  - path: '*.nupkg'
 
 # deploy:
 #   provider: NuGet
